@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Know Your Learner Type | EdQuest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'eq-yellow': '#F5B800',
+                        'eq-dark': '#1F1F1F',
+                        'eq-gray': '#F5F5F7',
+                        'eq-blue': '#D4EDFC',
+                    },
+                    fontFamily: { 'sans': ['DM Sans', 'system-ui', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { scroll-behavior: smooth; }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        .slide-up { animation: slideUp 0.4s ease-out; }
+        .bounce { animation: bounce 0.6s ease; }
+        .shake { animation: shake 0.5s ease; }
+        .pulse-glow { animation: pulseGlow 2s infinite; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(245, 184, 0, 0.4); } 50% { box-shadow: 0 0 20px 10px rgba(245, 184, 0, 0); } }
+        .card-shadow { box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .drag-item { cursor: grab; transition: all 0.2s; user-select: none; }
+        .drag-item:active { cursor: grabbing; }
+        .drag-item.dragging { opacity: 0.5; transform: scale(1.02); box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+        .option-card { transition: all 0.2s; cursor: pointer; }
+        .option-card:hover { border-color: #F5B800; transform: translateY(-2px); }
+        .option-card.selected { border-color: #F5B800; background: #FEF9E7; transform: scale(1.02); }
+        .chip { transition: all 0.2s; cursor: pointer; }
+        .chip:hover { border-color: #F5B800; }
+        .chip.selected { background: #F5B800; color: #1F1F1F; border-color: #F5B800; transform: scale(1.05); }
+        .bar-fill { transition: width 1s ease-out; }
+        .slider { -webkit-appearance: none; height: 8px; background: #E5E7EB; border-radius: 4px; }
+        .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; background: #F5B800; border-radius: 50%; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: transform 0.2s; }
+        .slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #1F1F1F; color: white; padding: 16px 24px; border-radius: 12px; z-index: 1000; opacity: 0; transition: all 0.3s; }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .toast.success { background: linear-gradient(135deg, #10B981, #059669); }
+        .toast.warning { background: linear-gradient(135deg, #F59E0B, #D97706); }
+        .toast.error { background: linear-gradient(135deg, #EF4444, #DC2626); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-overlay.show { display: flex; }
+        .modal { background: white; border-radius: 20px; padding: 30px; max-width: 400px; width: 90%; text-align: center; animation: slideUp 0.3s ease; }
+        .confetti { position: fixed; pointer-events: none; z-index: 200; }
+        .progress-ring { transform: rotate(-90deg); }
+        .progress-ring-circle { transition: stroke-dashoffset 0.5s ease; }
+        .btn-primary { background: #F5B800; color: #1F1F1F; font-weight: 600; padding: 16px 32px; border-radius: 12px; transition: all 0.2s; }
+        .btn-primary:hover { background: #E5AB00; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(245,184,0,0.4); }
+        .btn-primary:disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-secondary { background: #F3F4F6; color: #4B5563; font-weight: 600; padding: 16px 32px; border-radius: 12px; transition: all 0.2s; }
+        .btn-secondary:hover { background: #E5E7EB; }
+    </style>
+</head>
+<body class="bg-eq-gray min-h-screen font-sans">
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="modal-overlay">
+        <div class="modal">
+            <div class="w-16 h-16 border-4 border-eq-yellow border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-eq-dark font-medium" id="loading-text">Processing...</p>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="success-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-eq-dark mb-2" id="modal-title">Success!</h3>
+            <p class="text-gray-500 mb-6" id="modal-message">Your action was completed.</p>
+            <button onclick="closeModal()" class="btn-primary w-full">Continue</button>
+        </div>
+    </div>
+
+    <!-- Eddy AI Subscription Modal -->
+    <div id="subscription-modal" class="modal-overlay">
+        <div class="modal" style="max-width: 480px;">
+            <button onclick="closeSubscriptionModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <div class="w-20 h-20 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <span class="text-4xl">🤖</span>
+            </div>
+            <h3 class="text-2xl font-bold text-eq-dark mb-2">Unlock Eddy AI</h3>
+            <p class="text-gray-500 mb-6">Your personal AI learning companion with unlimited course generation & adaptive guidance</p>
+            
+            <div class="space-y-3 mb-6">
+                <div class="p-4 border-2 border-purple-200 rounded-xl bg-purple-50 cursor-pointer hover:border-purple-400 transition-all" onclick="selectPlan('yearly')">
+                    <div class="flex items-center justify-between">
+                        <div class="text-left">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-eq-dark">Yearly Plan</span>
+                                <span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-semibold">SAVE 58%</span>
+                            </div>
+                            <p class="text-sm text-gray-500">Best value for serious learners</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-bold text-purple-600">₹499</p>
+                            <p class="text-xs text-gray-400">/year</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-purple-400 transition-all" onclick="selectPlan('monthly')">
+                    <div class="flex items-center justify-between">
+                        <div class="text-left">
+                            <span class="font-bold text-eq-dark">Monthly Plan</span>
+                            <p class="text-sm text-gray-500">Flexible month-to-month</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-bold text-eq-dark">₹100</p>
+                            <p class="text-xs text-gray-400">/month</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 rounded-xl p-4 mb-6 text-left">
+                <p class="text-sm font-semibold text-eq-dark mb-2">✨ What's included:</p>
+                <ul class="text-sm text-gray-600 space-y-1">
+                    <li class="flex items-center gap-2"><span class="text-purple-500">✓</span> Unlimited course generation</li>
+                    <li class="flex items-center gap-2"><span class="text-purple-500">✓</span> Adaptive AI guidance</li>
+                    <li class="flex items-center gap-2"><span class="text-purple-500">✓</span> Progress analytics</li>
+                    <li class="flex items-center gap-2"><span class="text-purple-500">✓</span> Priority support</li>
+                </ul>
+            </div>
+
+            <button onclick="handleSubscription()" class="w-full py-4 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 transition-all shadow-lg">
+                Subscribe Now
+            </button>
+            <p class="text-xs text-gray-400 mt-3">Cancel anytime. 7-day money back guarantee.</p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-100 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="resetAssessment()">
+                <span class="text-2xl font-bold text-eq-dark">ed<span class="text-eq-yellow">Q</span>uest</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="header-progress" class="hidden md:flex items-center gap-2 text-sm text-gray-500">
+                    <span id="progress-text">Step 0/5</span>
+                    <div class="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div id="progress-bar" class="h-full bg-eq-yellow transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-eq-yellow flex items-center justify-center text-eq-dark font-bold">K</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- SCREEN 0: INTRO -->
+    <div id="screen-0" class="screen active">
+        <main class="max-w-2xl mx-auto px-4 py-8 md:py-12">
+            <div class="bg-white rounded-2xl card-shadow p-6 md:p-10 slide-up">
+                <div class="w-20 h-20 bg-gradient-to-br from-eq-yellow to-yellow-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                </div>
+                <h1 class="text-2xl md:text-3xl font-bold text-eq-dark text-center mb-3">Know Your Learner Type</h1>
+                <p class="text-gray-500 text-center mb-6">Discover how you learn best with our quick 5-minute assessment and get a personalized learning roadmap.</p>
+                
+                <div class="bg-eq-blue/50 rounded-xl p-4 mb-6">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="text-2xl">📊</span>
+                        <span class="font-semibold text-eq-dark">75% of students feel more motivated with personalized learning</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                        <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-eq-yellow rounded-full"></span>Learning preferences</div>
+                        <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-eq-yellow rounded-full"></span>Study habits</div>
+                        <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-eq-yellow rounded-full"></span>Content formats</div>
+                        <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-eq-yellow rounded-full"></span>Environment & timing</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-center gap-2 text-sm text-gray-400 mb-6">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>~5 minutes • 5 questions</span>
+                </div>
+
+                <label class="flex items-start gap-3 cursor-pointer p-4 border-2 border-gray-200 rounded-xl hover:border-eq-yellow transition-all mb-6 group">
+                    <input type="checkbox" id="consent" onchange="updateConsentButton()" class="w-5 h-5 mt-0.5 accent-eq-yellow cursor-pointer">
+                    <span class="text-sm text-gray-600">I agree to take this assessment. My responses will personalize my EdQuest experience. <a href="#" class="text-eq-dark underline">Privacy Policy</a></span>
+                </label>
+
+                <button id="start-btn" onclick="startAssessment()" disabled class="btn-primary w-full">Start Assessment</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- SCREEN 1: RANKING -->
+    <div id="screen-1" class="screen">
+        <main class="max-w-2xl mx-auto px-4 py-8 md:py-12">
+            <div class="bg-white rounded-2xl card-shadow p-6 md:p-10 slide-up">
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <span class="w-8 h-8 bg-eq-yellow rounded-full flex items-center justify-center text-sm font-bold text-white">1</span>
+                    <span class="text-sm text-gray-400">of 5</span>
+                </div>
+                <h2 class="text-xl md:text-2xl font-bold text-eq-dark text-center mb-2">How do you start learning something new?</h2>
+                <p class="text-gray-500 text-center text-sm mb-6">Drag to rank from most preferred (top) to least preferred (bottom)</p>
+
+                <div id="sortable-list" class="space-y-3 mb-8">
+                    <div class="drag-item flex items-center gap-4 p-4 bg-eq-gray border-2 border-transparent rounded-xl" draggable="true" data-id="build">
+                        <span class="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-sm font-bold text-eq-dark shadow rank-num">1</span>
+                        <span class="flex-1 font-medium">🛠️ Build / experiment hands-on</span>
+                        <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6h8v2H8V6zm0 4h8v2H8v-2zm0 4h8v2H8v-2z"/></svg>
+                    </div>
+                    <div class="drag-item flex items-center gap-4 p-4 bg-eq-gray border-2 border-transparent rounded-xl" draggable="true" data-id="watch">
+                        <span class="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-sm font-bold text-eq-dark shadow rank-num">2</span>
+                        <span class="flex-1 font-medium">🎬 Watch video tutorials</span>
+                        <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6h8v2H8V6zm0 4h8v2H8v-2zm0 4h8v2H8v-2z"/></svg>
+                    </div>
+                    <div class="drag-item flex items-center gap-4 p-4 bg-eq-gray border-2 border-transparent rounded-xl" draggable="true" data-id="visual">
+                        <span class="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-sm font-bold text-eq-dark shadow rank-num">3</span>
+                        <span class="flex-1 font-medium">📊 Look at diagrams & visuals</span>
+                        <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6h8v2H8V6zm0 4h8v2H8v-2zm0 4h8v2H8v-2z"/></svg>
+                    </div>
+                    <div class="drag-item flex items-center gap-4 p-4 bg-eq-gray border-2 border-transparent rounded-xl" draggable="true" data-id="discuss">
+                        <span class="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-sm font-bold text-eq-dark shadow rank-num">4</span>
+                        <span class="flex-1 font-medium">💬 Discuss with peers</span>
+                        <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6h8v2H8V6zm0 4h8v2H8v-2zm0 4h8v2H8v-2z"/></svg>
+                    </div>
+                    <div class="drag-item flex items-center gap-4 p-4 bg-eq-gray border-2 border-transparent rounded-xl" draggable="true" data-id="read">
+                        <span class="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-sm font-bold text-eq-dark shadow rank-num">5</span>
+                        <span class="flex-1 font-medium">📖 Read documentation</span>
+                        <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6h8v2H8V6zm0 4h8v2H8v-2zm0 4h8v2H8v-2z"/></svg>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="goBack()" class="btn-secondary flex-1">Back</button>
+                    <button onclick="nextStep(1)" class="btn-primary flex-1">Next →</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- SCREEN 2: RATINGS -->
+    <div id="screen-2" class="screen">
+        <main class="max-w-2xl mx-auto px-4 py-8 md:py-12">
+            <div class="bg-white rounded-2xl card-shadow p-6 md:p-10 slide-up">
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <span class="w-8 h-8 bg-eq-yellow rounded-full flex items-center justify-center text-sm font-bold text-white">2</span>
+                    <span class="text-sm text-gray-400">of 5</span>
+                </div>
+                <h2 class="text-xl md:text-2xl font-bold text-eq-dark text-center mb-2">Rate how helpful each format is</h2>
+                <p class="text-gray-500 text-center text-sm mb-8">1 = Not helpful, 5 = Very helpful</p>
+
+                <div class="space-y-8 mb-8">
+                    <div class="slider-group">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-medium text-eq-dark">🎧 Audio (podcasts, lectures)</span>
+                            <span class="rating-value w-10 h-10 bg-eq-yellow/20 rounded-xl flex items-center justify-center font-bold text-eq-dark" data-slider="audio">3</span>
+                        </div>
+                        <input type="range" min="1" max="5" value="3" class="slider w-full" data-type="audio" oninput="updateSlider(this)">
+                    </div>
+                    <div class="slider-group">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-medium text-eq-dark">📊 Visual (diagrams, infographics)</span>
+                            <span class="rating-value w-10 h-10 bg-eq-yellow/20 rounded-xl flex items-center justify-center font-bold text-eq-dark" data-slider="visual">3</span>
+                        </div>
+                        <input type="range" min="1" max="5" value="3" class="slider w-full" data-type="visual" oninput="updateSlider(this)">
+                    </div>
+                    <div class="slider-group">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-medium text-eq-dark">📝 Text (articles, books)</span>
+                            <span class="rating-value w-10 h-10 bg-eq-yellow/20 rounded-xl flex items-center justify-center font-bold text-eq-dark" data-slider="text">3</span>
+                        </div>
+                        <input type="range" min="1" max="5" value="3" class="slider w-full" data-type="text" oninput="updateSlider(this)">
+                    </div>
+                    <div class="slider-group">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-medium text-eq-dark">🎬 Video tutorials</span>
+                            <span class="rating-value w-10 h-10 bg-eq-yellow/20 rounded-xl flex items-center justify-center font-bold text-eq-dark" data-slider="video">3</span>
+                        </div>
+                        <input type="range" min="1" max="5" value="3" class="slider w-full" data-type="video" oninput="updateSlider(this)">
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="goBack()" class="btn-secondary flex-1">Back</button>
+                    <button onclick="nextStep(2)" class="btn-primary flex-1">Next →</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- SCREEN 3: APPROACH -->
+    <div id="screen-3" class="screen">
+        <main class="max-w-2xl mx-auto px-4 py-8 md:py-12">
+            <div class="bg-white rounded-2xl card-shadow p-6 md:p-10 slide-up">
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <span class="w-8 h-8 bg-eq-yellow rounded-full flex items-center justify-center text-sm font-bold text-white">3</span>
+                    <span class="text-sm text-gray-400">of 5</span>
+                </div>
+                <h2 class="text-xl md:text-2xl font-bold text-eq-dark text-center mb-2">What's your first instinct with new topics?</h2>
+                <p class="text-gray-500 text-center text-sm mb-6">Select one approach</p>
+
+                <div class="space-y-3 mb-8" id="approach-options">
+                    <div class="option-card p-4 border-2 border-gray-200 rounded-xl" onclick="selectOption('approach', 'prototype', this)">
+                        <div class="flex items-center gap-4">
+                            <span class="text-3xl">🚀</span>
+                            <div><p class="font-semibold text-eq-dark">Prototype quickly</p><p class="text-sm text-gray-500">Jump in and experiment</p></div>
+                        </div>
+                    </div>
+                    <div class="option-card p-4 border-2 border-gray-200 rounded-xl" onclick="selectOption('approach', 'plan', this)">
+                        <div class="flex items-center gap-4">
+                            <span class="text-3xl">📋</span>
+                            <div><p class="font-semibold text-eq-dark">Plan & outline first</p><p class="text-sm text-gray-500">Create a structured roadmap</p></div>
+                        </div>
+                    </div>
+                    <div class="option-card p-4 border-2 border-gray-200 rounded-xl" onclick="selectOption('approach', 'discuss', this)">
+                        <div class="flex items-center gap-4">
+                            <span class="text-3xl">💬</span>
+                            <div><p class="font-semibold text-eq-dark">Discuss with peers</p><p class="text-sm text-gray-500">Talk it through with others</p></div>
+                        </div>
+                    </div>
+                    <div class="option-card p-4 border-2 border-gray-200 rounded-xl" onclick="selectOption('approach', 'overview', this)">
+                        <div class="flex items-center gap-4">
+                            <span class="text-3xl">🗺️</span>
+                            <div><p class="font-semibold text-eq-dark">Get big picture first</p><p class="text-sm text-gray-500">Understand the overview</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="goBack()" class="btn-secondary flex-1">Back</button>
+                    <button id="step3-next" onclick="nextStep(3)" disabled class="btn-primary flex-1">Next →</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- SCREEN 4: HABITS -->
+    <div id="screen-4" class="screen">
+        <main class="max-w-2xl mx-auto px-4 py-8 md:py-12">
+            <div class="bg-white rounded-2xl card-shadow p-6 md:p-10 slide-up">
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <span class="w-8 h-8 bg-eq-yellow rounded-full flex items-center justify-center text-sm font-bold text-white">4</span>
+                    <span class="text-sm text-gray-400">of 5</span>
+                </div>
+                <h2 class="text-xl md:text-2xl font-bold text-eq-dark text-center mb-2">Which habits describe you?</h2>
+                <p class="text-gray-500 text-center text-sm mb-6">Select all that apply</p>
+
+                <div class="flex flex-wrap gap-3 justify-center mb-8" id="habits-container">
+                    <button class="chip px-4 py-3 border-2 border-gray-200 rounded-xl text-sm font-medium" onclick="toggleChip(this, 'habits', 'retros')">📅 Weekly planning</button>
+                    <button class="chip px-4 py-3 border-2 border-gray-200 rounded-xl text-sm font-medium" onclick="toggleChip(this, 'habits', 'microloops')">🔄 Build-test loops</button>
+                    <button class="chip px-4 py-3 border-2 border-gray-200 rounded-xl text-sm font-medium" onclick="toggleChip(this, 'habits', 'teachback')">🎤 Teach others</button>
+                    <button class="chip px-4 py-3 border-2 border-gray-200 rounded-xl text-sm font-medium" onclick="toggleChip(this, 'habits', 'summaries')">✍️ Write summaries</button>
+                    <button class="chip px-4 py-3 border-2 border-gray-200 rounded-xl text-sm font-medium" onclick="toggleChip(this, 'habits', 'groupstudy')">👥 Group study</button>
+                    <button class="chip px-4 py-3 border-2 border-gray-200 rounded-xl text-sm font-medium" onclick="toggleChip(this, 'habits', 'peerreview')">🔍 Peer reviews</button>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="goBack()" class="btn-secondary flex-1">Back</button>
+                    <button onclick="nextStep(4)" class="btn-primary flex-1">Next →</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- SCREEN 5: ENVIRONMENT -->
+    <div id="screen-5" class="screen">
+        <main class="max-w-2xl mx-auto px-4 py-8 md:py-12">
+            <div class="bg-white rounded-2xl card-shadow p-6 md:p-10 slide-up">
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <span class="w-8 h-8 bg-eq-yellow rounded-full flex items-center justify-center text-sm font-bold text-white">5</span>
+                    <span class="text-sm text-gray-400">of 5</span>
+                </div>
+                <h2 class="text-xl md:text-2xl font-bold text-eq-dark text-center mb-2">Where & when do you learn best?</h2>
+                <p class="text-gray-500 text-center text-sm mb-6">Select one from each</p>
+
+                <div class="space-y-6 mb-8">
+                    <div>
+                        <label class="block text-sm font-semibold text-eq-dark mb-3">🏠 Environment</label>
+                        <div class="grid grid-cols-2 gap-3" id="env-options">
+                            <div class="option-card p-4 border-2 border-gray-200 rounded-xl text-center" onclick="selectOption('env', 'quiet', this)"><span class="text-2xl block mb-1">🤫</span><span class="text-sm font-medium">Quiet room</span></div>
+                            <div class="option-card p-4 border-2 border-gray-200 rounded-xl text-center" onclick="selectOption('env', 'cafe', this)"><span class="text-2xl block mb-1">☕</span><span class="text-sm font-medium">Café</span></div>
+                            <div class="option-card p-4 border-2 border-gray-200 rounded-xl text-center" onclick="selectOption('env', 'team', this)"><span class="text-2xl block mb-1">👥</span><span class="text-sm font-medium">Team/Lab</span></div>
+                            <div class="option-card p-4 border-2 border-gray-200 rounded-xl text-center" onclick="selectOption('env', 'library', this)"><span class="text-2xl block mb-1">📚</span><span class="text-sm font-medium">Library</span></div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-eq-dark mb-3">⏰ Time</label>
+                        <div class="grid grid-cols-3 gap-3" id="time-options">
+                            <div class="option-card p-4 border-2 border-gray-200 rounded-xl text-center" onclick="selectOption('time', 'morning', this)"><span class="text-2xl block mb-1">🌅</span><span class="text-sm font-medium">Morning</span></div>
+                            <div class="option-card p-4 border-2 border-gray-200 rounded-xl text-center" onclick="selectOption('time', 'afternoon', this)"><span class="text-2xl block mb-1">☀️</span><span class="text-sm font-medium">Afternoon</span></div>
+                            <div class="option-card p-4 border-2 border-gray-200 rounded-xl text-center" onclick="selectOption('time', 'night', this)"><span class="text-2xl block mb-1">🌙</span><span class="text-sm font-medium">Night</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="goBack()" class="btn-secondary flex-1">Back</button>
+                    <button id="step5-next" onclick="finishAssessment()" disabled class="btn-primary flex-1 pulse-glow">See My Results 🎉</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- SCREEN 6: RESULTS -->
+    <div id="screen-6" class="screen">
+        <main class="max-w-3xl mx-auto px-4 py-8 md:py-12">
+            <div class="text-center mb-6 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-semibold mb-3">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    Assessment Complete!
+                </div>
+                <h1 class="text-3xl font-bold text-eq-dark">Your Learner Profile</h1>
+            </div>
+
+            <div class="bg-white rounded-2xl card-shadow p-6 md:p-10 slide-up">
+                <!-- Primary Badge -->
+                <div class="text-center mb-8">
+                    <div id="result-icon" class="w-24 h-24 bg-gradient-to-br from-eq-yellow to-yellow-400 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg text-5xl">🛠️</div>
+                    <span class="inline-block px-3 py-1 bg-eq-yellow/20 rounded-full text-xs font-semibold text-eq-dark mb-2">PRIMARY TYPE</span>
+                    <h2 id="result-type" class="text-2xl font-bold text-eq-dark">Hands-On Builder</h2>
+                    <p id="result-desc" class="text-gray-500 mt-2 max-w-md mx-auto">You learn by doing and experimenting.</p>
+                </div>
+
+                <!-- Top Tags -->
+                <div class="mb-8">
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 text-center">Your Top Strengths</h3>
+                    <div id="result-tags" class="flex flex-wrap justify-center gap-2"></div>
+                </div>
+
+                <!-- Score Chart -->
+                <div class="mb-8">
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Confidence Scores</h3>
+                    <div id="result-bars" class="space-y-3"></div>
+                </div>
+
+                <!-- Tips -->
+                <div class="bg-eq-gray rounded-xl p-5 mb-8">
+                    <h3 class="font-semibold text-eq-dark mb-3">💡 Learning Tips</h3>
+                    <ul id="result-tips" class="space-y-2 text-sm text-gray-600"></ul>
+                </div>
+
+                <!-- CTAs -->
+                <div class="space-y-3">
+                    <button onclick="goToScreen(7)" class="btn-primary w-full flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        Generate Personalized Roadmap
+                    </button>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <button onclick="downloadReport()" class="py-4 rounded-xl font-semibold text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 transition-all flex items-center justify-center gap-2 shadow-lg">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            <span>Full Report</span>
+                            <span class="text-green-200 line-through text-xs">₹50</span>
+                            <span class="bg-white text-green-600 px-1.5 py-0.5 rounded text-xs font-bold">FREE</span>
+                        </button>
+                        <button onclick="showSubscriptionModal()" class="py-4 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                            <span>Unlock Eddy AI</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- SCREEN 7: ROADMAP GENERATOR -->
+    <div id="screen-7" class="screen">
+        <main class="max-w-2xl mx-auto px-4 py-8 md:py-12">
+            <div class="text-center mb-6 fade-in">
+                <h1 class="text-2xl font-bold text-eq-dark mb-2">Generate Your Roadmap</h1>
+                <p class="text-gray-500">Tailored for <span id="gen-type-label" class="text-eq-yellow font-semibold">your learner type</span></p>
+            </div>
+
+            <div class="bg-white rounded-2xl card-shadow p-6 md:p-10 slide-up">
+                <div class="space-y-6 mb-8">
+                    <div>
+                        <label class="block text-sm font-semibold text-eq-dark mb-2">What do you want to learn?</label>
+                        <input type="text" id="topic-input" placeholder="e.g., Python, Machine Learning..." oninput="checkGenerator()" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-eq-yellow focus:outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-eq-dark mb-2">Category</label>
+                        <div class="flex flex-wrap gap-2" id="cat-chips">
+                            <button class="chip px-4 py-2 border-2 border-gray-200 rounded-full text-sm" onclick="selectChip(this, 'category')">💻 Coding</button>
+                            <button class="chip px-4 py-2 border-2 border-gray-200 rounded-full text-sm" onclick="selectChip(this, 'category')">🎨 Design</button>
+                            <button class="chip px-4 py-2 border-2 border-gray-200 rounded-full text-sm" onclick="selectChip(this, 'category')">📦 Product</button>
+                            <button class="chip px-4 py-2 border-2 border-gray-200 rounded-full text-sm" onclick="selectChip(this, 'category')">📣 Marketing</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-eq-dark mb-2">Level</label>
+                        <div class="grid grid-cols-3 gap-3" id="level-options">
+                            <div class="option-card p-3 border-2 border-gray-200 rounded-xl text-center text-sm" onclick="selectOption('level', 'beginner', this)">🌱 Beginner</div>
+                            <div class="option-card p-3 border-2 border-gray-200 rounded-xl text-center text-sm" onclick="selectOption('level', 'intermediate', this)">🌿 Intermediate</div>
+                            <div class="option-card p-3 border-2 border-gray-200 rounded-xl text-center text-sm" onclick="selectOption('level', 'advanced', this)">🌳 Advanced</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-eq-blue/50 rounded-xl p-4 mb-6 flex items-center gap-3">
+                    <span id="applied-icon" class="text-2xl">🛠️</span>
+                    <div>
+                        <p class="text-sm font-semibold text-eq-dark">Optimized for <span id="applied-type">Hands-On Builder</span></p>
+                        <p class="text-xs text-gray-600">Content prioritized for your learning style</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="goToScreen(6)" class="btn-secondary flex-1">Back</button>
+                    <button id="generate-btn" onclick="generateRoadmap()" disabled class="btn-primary flex-1">Generate →</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- SCREEN 8: ROADMAP -->
+    <div id="screen-8" class="screen">
+        <main class="max-w-4xl mx-auto px-4 py-8 md:py-12">
+            <div class="flex items-center justify-between mb-6 fade-in">
+                <div>
+                    <h1 class="text-2xl font-bold text-eq-dark" id="roadmap-title">Your Python Roadmap</h1>
+                    <p class="text-gray-500"><span id="roadmap-level-label">Beginner</span> • <span id="roadmap-type-label">Hands-On Builder</span></p>
+                </div>
+            </div>
+
+            <div class="bg-eq-yellow rounded-2xl p-4 mb-6 fade-in">
+                <div class="grid grid-cols-4 divide-x divide-yellow-600/20 text-center">
+                    <div><p id="stat-modules" class="text-2xl font-bold">6</p><p class="text-xs opacity-70">Modules</p></div>
+                    <div><p id="stat-time" class="text-2xl font-bold">2.5h</p><p class="text-xs opacity-70">Duration</p></div>
+                    <div><p class="text-2xl font-bold">180</p><p class="text-xs opacity-70">EdCoins</p></div>
+                    <div><p class="text-2xl font-bold">🏆</p><p class="text-xs opacity-70">Certificate</p></div>
+                </div>
+            </div>
+
+            <div id="roadmap-cards" class="space-y-4 mb-8"></div>
+
+            <div class="sticky bottom-4 bg-white rounded-2xl card-shadow p-4 flex gap-3">
+                <button onclick="goToScreen(7)" class="btn-secondary flex-1">Regenerate</button>
+                <button onclick="showToast('Roadmap saved! Starting your learning journey...', 'success')" class="btn-primary flex-1 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                    Start Learning
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+    // ===== STATE =====
+    const state = {
+        currentScreen: 0,
+        ranking: ['build', 'watch', 'visual', 'discuss', 'read'],
+        ratings: { audio: 3, visual: 3, text: 3, video: 3 },
+        approach: null,
+        habits: [],
+        env: null,
+        time: null,
+        results: null,
+        generator: { topic: '', category: '', level: '' }
+    };
+
+    const typeConfig = {
+        handsOn: { name: 'Hands-On Builder', icon: '🛠️', desc: 'You learn by doing, experimenting, and building.', color: 'bg-orange-100 text-orange-700', tips: ['Start with mini-projects', 'Use sandbox environments', 'Build while learning'] },
+        visual: { name: 'Visual Thinker', icon: '📊', desc: 'You absorb info through diagrams and visuals.', color: 'bg-blue-100 text-blue-700', tips: ['Use mind maps', 'Watch video tutorials', 'Create visual notes'] },
+        audio: { name: 'Audio Learner', icon: '🎧', desc: 'You retain info through listening.', color: 'bg-purple-100 text-purple-700', tips: ['Listen to podcasts', 'Use text-to-speech', 'Discuss concepts aloud'] },
+        textRW: { name: 'Text/Read-Write', icon: '📖', desc: 'You prefer reading and writing.', color: 'bg-green-100 text-green-700', tips: ['Take detailed notes', 'Read documentation', 'Write summaries'] },
+        planner: { name: 'Planner/Reflective', icon: '📋', desc: 'You excel with structure and planning.', color: 'bg-indigo-100 text-indigo-700', tips: ['Create study schedules', 'Set milestones', 'Review regularly'] },
+        active: { name: 'Active Experimenter', icon: '🔬', desc: 'You thrive on rapid iteration.', color: 'bg-red-100 text-red-700', tips: ['Experiment often', 'Embrace failure', 'Quick iterations'] },
+        social: { name: 'Social Collaborator', icon: '👥', desc: 'You learn through discussion.', color: 'bg-pink-100 text-pink-700', tips: ['Join study groups', 'Teach others', 'Peer discussions'] },
+        stepByStep: { name: 'Step-by-Step', icon: '📝', desc: 'You prefer sequential learning.', color: 'bg-cyan-100 text-cyan-700', tips: ['Follow tutorials', 'Complete prerequisites', 'Use checklists'] },
+        bigPicture: { name: 'Big-Picture', icon: '🗺️', desc: 'You need the overview first.', color: 'bg-amber-100 text-amber-700', tips: ['Start with overviews', 'Understand context', 'Map relationships'] }
+    };
+
+    const caps = { handsOn: 12, visual: 11, audio: 8, textRW: 8, planner: 8, active: 9, social: 15, stepByStep: 9, bigPicture: 7 };
+
+    // ===== NAVIGATION =====
+    function goToScreen(n) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(`screen-${n}`).classList.add('active');
+        state.currentScreen = n;
+        updateHeaderProgress();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function goBack() {
+        if (state.currentScreen > 0) goToScreen(state.currentScreen - 1);
+    }
+
+    function updateHeaderProgress() {
+        const progress = Math.min((state.currentScreen / 5) * 100, 100);
+        document.getElementById('progress-bar').style.width = `${progress}%`;
+        document.getElementById('progress-text').textContent = `Step ${Math.min(state.currentScreen, 5)}/5`;
+        document.getElementById('header-progress').classList.toggle('hidden', state.currentScreen === 0 || state.currentScreen > 5);
+    }
+
+    // ===== TOAST =====
+    function showToast(msg, type = 'success') {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.className = `toast ${type} show`;
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ===== MODAL =====
+    function showModal(title, msg) {
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-message').textContent = msg;
+        document.getElementById('success-modal').classList.add('show');
+    }
+
+    function closeModal() {
+        document.getElementById('success-modal').classList.remove('show');
+    }
+
+    function showLoading(msg = 'Processing...') {
+        document.getElementById('loading-text').textContent = msg;
+        document.getElementById('loading-overlay').classList.add('show');
+    }
+
+    function hideLoading() {
+        document.getElementById('loading-overlay').classList.remove('show');
+    }
+
+    // ===== INTRO =====
+    function updateConsentButton() {
+        const btn = document.getElementById('start-btn');
+        btn.disabled = !document.getElementById('consent').checked;
+    }
+
+    function startAssessment() {
+        showToast('Let\'s discover your learning style!', 'success');
+        goToScreen(1);
+    }
+
+    function resetAssessment() {
+        if (state.currentScreen > 0 && state.currentScreen < 6) {
+            if (confirm('Reset assessment and start over?')) {
+                location.reload();
+            }
+        }
+    }
+
+    // ===== DRAG & DROP =====
+    let draggedItem = null;
+    const sortable = document.getElementById('sortable-list');
+
+    sortable.addEventListener('dragstart', e => {
+        if (e.target.classList.contains('drag-item')) {
+            draggedItem = e.target;
+            e.target.classList.add('dragging');
+            setTimeout(() => e.target.style.opacity = '0.5', 0);
+        }
+    });
+
+    sortable.addEventListener('dragend', e => {
+        e.target.classList.remove('dragging');
+        e.target.style.opacity = '1';
+        draggedItem = null;
+        updateRankNumbers();
+    });
+
+    sortable.addEventListener('dragover', e => {
+        e.preventDefault();
+        const afterEl = getDragAfterElement(sortable, e.clientY);
+        if (afterEl == null) sortable.appendChild(draggedItem);
+        else sortable.insertBefore(draggedItem, afterEl);
+    });
+
+    function getDragAfterElement(container, y) {
+        const els = [...container.querySelectorAll('.drag-item:not(.dragging)')];
+        return els.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) return { offset, element: child };
+            return closest;
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    function updateRankNumbers() {
+        document.querySelectorAll('#sortable-list .drag-item').forEach((item, i) => {
+            item.querySelector('.rank-num').textContent = i + 1;
+            state.ranking[i] = item.dataset.id;
+        });
+    }
+
+    // ===== SLIDERS =====
+    function updateSlider(el) {
+        const type = el.dataset.type;
+        const val = parseInt(el.value);
+        state.ratings[type] = val;
+        document.querySelector(`[data-slider="${type}"]`).textContent = val;
+    }
+
+    // ===== OPTIONS =====
+    function selectOption(group, value, el) {
+        const container = el.parentElement;
+        container.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        el.classList.add('bounce');
+        setTimeout(() => el.classList.remove('bounce'), 600);
+
+        if (group === 'approach') {
+            state.approach = value;
+            document.getElementById('step3-next').disabled = false;
+        } else if (group === 'env') {
+            state.env = value;
+            checkStep5();
+        } else if (group === 'time') {
+            state.time = value;
+            checkStep5();
+        } else if (group === 'level') {
+            state.generator.level = value;
+            checkGenerator();
+        }
+    }
+
+    function toggleChip(el, group, value) {
+        el.classList.toggle('selected');
+        if (group === 'habits') {
+            if (state.habits.includes(value)) state.habits = state.habits.filter(h => h !== value);
+            else state.habits.push(value);
+        }
+    }
+
+    function selectChip(el, group) {
+        el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        if (group === 'category') {
+            state.generator.category = el.textContent.trim();
+            checkGenerator();
+        }
+    }
+
+    function checkStep5() {
+        document.getElementById('step5-next').disabled = !(state.env && state.time);
+    }
+
+    // ===== STEPS =====
+    function nextStep(step) {
+        showToast(`Step ${step} saved!`, 'success');
+        goToScreen(step + 1);
+    }
+
+    // ===== SCORING =====
+    function calculateScores() {
+        const raw = { handsOn: 0, visual: 0, audio: 0, textRW: 0, planner: 0, active: 0, social: 0, stepByStep: 0, bigPicture: 0 };
+        
+        // Ranking
+        const rank = id => state.ranking.indexOf(id) + 1;
+        if (rank('build') <= 2) raw.handsOn += 5 - rank('build');
+        if (rank('watch') <= 2) raw.stepByStep += 5 - rank('watch');
+        if (rank('visual') <= 2) raw.visual += 5 - rank('visual');
+        if (rank('discuss') <= 2) raw.social += 5 - rank('discuss');
+        if (rank('build') === 1) raw.active += 3;
+        if (rank('visual') === 1) raw.bigPicture += 3;
+
+        // Ratings
+        raw.audio += state.ratings.audio;
+        raw.visual += state.ratings.visual;
+        raw.textRW += state.ratings.text;
+        raw.stepByStep += Math.ceil(state.ratings.video / 2);
+
+        // Approach
+        if (state.approach === 'prototype') { raw.handsOn += 4; raw.active += 2; }
+        if (state.approach === 'plan') { raw.planner += 4; raw.stepByStep += 1; }
+        if (state.approach === 'discuss') { raw.social += 4; raw.active += 2; }
+        if (state.approach === 'overview') { raw.bigPicture += 4; raw.visual += 2; }
+
+        // Habits
+        if (state.habits.includes('retros')) raw.planner += 3;
+        if (state.habits.includes('microloops')) raw.active += 3;
+        if (state.habits.includes('teachback')) { raw.social += 2; raw.textRW += 2; }
+        if (state.habits.includes('summaries')) raw.textRW += 2;
+        if (state.habits.includes('groupstudy')) raw.social += 3;
+        if (state.habits.includes('peerreview')) raw.social += 2;
+
+        // Environment
+        if (state.env === 'team') raw.social += 2;
+        if (state.env === 'quiet') raw.planner += 1;
+        if (state.env === 'cafe') raw.active += 1;
+        if (state.time === 'morning') raw.planner += 1;
+        if (state.time === 'night') raw.handsOn += 1;
+
+        // Normalize
+        const confidence30 = {};
+        Object.keys(raw).forEach(t => {
+            const capped = Math.min(raw[t], caps[t]);
+            confidence30[t] = Math.round((capped / caps[t]) * 30);
+        });
+
+        const sorted = Object.entries(confidence30).sort((a, b) => b[1] - a[1]);
+        const primary = sorted[0][0];
+        const secondary = sorted.slice(1, 3).map(s => s[0]);
+
+        return { confidence30, primary, secondary, sorted };
+    }
+
+    function finishAssessment() {
+        showLoading('Analyzing your responses...');
+        setTimeout(() => {
+            state.results = calculateScores();
+            hideLoading();
+            renderResults();
+            goToScreen(6);
+            createConfetti();
+        }, 1500);
+    }
+
+    function renderResults() {
+        const { primary, secondary, confidence30, sorted } = state.results;
+        const cfg = typeConfig[primary];
+
+        document.getElementById('result-icon').textContent = cfg.icon;
+        document.getElementById('result-type').textContent = cfg.name;
+        document.getElementById('result-desc').textContent = cfg.desc;
+
+        // Tags
+        const tags = [primary, ...secondary].slice(0, 3);
+        document.getElementById('result-tags').innerHTML = tags.map(t => {
+            const c = typeConfig[t];
+            return `<span class="px-3 py-1.5 ${c.color} rounded-full text-sm font-medium">${c.icon} ${c.name}</span>`;
+        }).join('');
+
+        // Bars
+        document.getElementById('result-bars').innerHTML = sorted.map(([type, score]) => {
+            const c = typeConfig[type];
+            return `<div class="flex items-center gap-2">
+                <span class="w-6 text-lg">${c.icon}</span>
+                <span class="w-28 text-sm text-gray-500 truncate">${c.name}</span>
+                <div class="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="bar-fill h-full bg-eq-yellow rounded-full" style="width: 0%" data-width="${(score/30)*100}%"></div>
+                </div>
+                <span class="w-8 text-sm font-bold text-right">${score}</span>
+            </div>`;
+        }).join('');
+
+        setTimeout(() => {
+            document.querySelectorAll('.bar-fill').forEach(bar => {
+                bar.style.width = bar.dataset.width;
+            });
+        }, 300);
+
+        // Tips
+        document.getElementById('result-tips').innerHTML = cfg.tips.map(t => `<li class="flex items-start gap-2"><span class="text-eq-yellow">✓</span>${t}</li>`).join('');
+
+        // Generator
+        document.getElementById('gen-type-label').textContent = cfg.name;
+        document.getElementById('applied-icon').textContent = cfg.icon;
+        document.getElementById('applied-type').textContent = cfg.name;
+    }
+
+    // ===== CONFETTI =====
+    function createConfetti() {
+        const colors = ['#F5B800', '#10B981', '#3B82F6', '#EF4444', '#8B5CF6'];
+        for (let i = 0; i < 50; i++) {
+            const conf = document.createElement('div');
+            conf.className = 'confetti';
+            conf.style.cssText = `left:${Math.random()*100}vw;top:-10px;width:10px;height:10px;background:${colors[Math.floor(Math.random()*colors.length)]};position:fixed;border-radius:50%;animation:fall ${2+Math.random()*2}s linear forwards;`;
+            document.body.appendChild(conf);
+            setTimeout(() => conf.remove(), 4000);
+        }
+        const style = document.createElement('style');
+        style.textContent = '@keyframes fall{to{transform:translateY(100vh) rotate(720deg);opacity:0;}}';
+        document.head.appendChild(style);
+    }
+
+    // ===== GENERATOR =====
+    function checkGenerator() {
+        state.generator.topic = document.getElementById('topic-input').value;
+        document.getElementById('generate-btn').disabled = !(state.generator.topic && state.generator.category && state.generator.level);
+    }
+
+    function generateRoadmap() {
+        showLoading('Creating your personalized roadmap...');
+        setTimeout(() => {
+            hideLoading();
+            renderRoadmap();
+            goToScreen(8);
+            showToast('Roadmap generated!', 'success');
+        }, 1500);
+    }
+
+    function renderRoadmap() {
+        const primary = state.results?.primary || 'handsOn';
+        const cfg = typeConfig[primary];
+        const topic = state.generator.topic;
+        const level = state.generator.level;
+
+        document.getElementById('roadmap-title').textContent = `Your ${topic} Roadmap`;
+        document.getElementById('roadmap-level-label').textContent = level.charAt(0).toUpperCase() + level.slice(1);
+        document.getElementById('roadmap-type-label').textContent = cfg.name;
+
+        const formats = {
+            handsOn: ['Project', 'Project', 'Video', 'Project', 'Quiz', 'Project'],
+            visual: ['Video', 'Article', 'Video', 'Quiz', 'Project', 'Video'],
+            planner: ['Article', 'Video', 'Quiz', 'Project', 'Review', 'Assessment'],
+            social: ['Discussion', 'Video', 'Group Work', 'Quiz', 'Peer Review', 'Discussion'],
+        };
+        const icons = { Project: '🛠️', Video: '🎬', Article: '📖', Quiz: '❓', Discussion: '💬', 'Group Work': '👥', Review: '📋', Assessment: '📝', 'Peer Review': '🔍' };
+        const fmts = formats[primary] || formats.handsOn;
+        const mult = level === 'beginner' ? 1 : level === 'intermediate' ? 1.3 : 1.6;
+
+        const modules = fmts.map((fmt, i) => ({
+            format: fmt,
+            icon: icons[fmt] || '📚',
+            title: [`Intro to ${topic}`, `${topic} Fundamentals`, `${topic} in Practice`, `${topic} Quiz`, `Build ${topic} Project`, `Advanced ${topic}`][i],
+            duration: Math.round((15 + i * 5) * mult)
+        }));
+
+        document.getElementById('stat-modules').textContent = modules.length;
+        document.getElementById('stat-time').textContent = `${(modules.reduce((a, m) => a + m.duration, 0) / 60).toFixed(1)}h`;
+
+        document.getElementById('roadmap-cards').innerHTML = modules.map((m, i) => `
+            <div class="bg-white rounded-xl card-shadow p-5 slide-up" style="animation-delay:${i*0.1}s">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-eq-gray rounded-xl flex items-center justify-center text-2xl">${m.icon}</div>
+                    <div class="flex-1">
+                        <span class="text-xs px-2 py-0.5 bg-eq-blue rounded-full">${m.format}</span>
+                        <h4 class="font-semibold mt-1">${m.title}</h4>
+                    </div>
+                    <span class="text-sm text-gray-400">${m.duration}min</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // ===== REPORT =====
+    function downloadReport() {
+        if (!state.results) { showToast('Complete the assessment first!', 'error'); return; }
+        showLoading('Generating your report...');
+        setTimeout(() => {
+            hideLoading();
+            const { primary, secondary, confidence30, sorted } = state.results;
+            const cfg = typeConfig[primary];
+            const date = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Learner Report - EdQuest</title>
+            <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:system-ui,sans-serif;padding:40px;max-width:800px;margin:auto;color:#1F1F1F}
+            .header{text-align:center;border-bottom:3px solid #F5B800;padding-bottom:20px;margin-bottom:30px}
+            .logo{font-size:24px;font-weight:700}.logo span{color:#F5B800}
+            .primary{background:linear-gradient(135deg,#FEF9E7,#FFF8E1);border-radius:16px;padding:30px;text-align:center;margin-bottom:30px}
+            .primary-icon{font-size:60px;margin-bottom:10px}.primary-name{font-size:28px;font-weight:700}
+            .section{margin-bottom:25px}.section-title{font-size:16px;font-weight:700;margin-bottom:15px;padding-bottom:8px;border-bottom:2px solid #F5F5F7}
+            .score-bar{display:flex;align-items:center;margin-bottom:10px;font-size:14px}
+            .score-bar .icon{width:25px}.score-bar .name{width:140px;color:#666}
+            .score-bar .track{flex:1;height:10px;background:#F5F5F7;border-radius:5px;overflow:hidden;margin:0 10px}
+            .score-bar .fill{height:100%;background:#F5B800;border-radius:5px}
+            .score-bar .val{width:35px;text-align:right;font-weight:700}
+            .tips{background:#F9FAFB;border-radius:12px;padding:20px}.tips li{padding:8px 0;font-size:14px}
+            .footer{text-align:center;margin-top:40px;padding-top:20px;border-top:2px solid #F5F5F7;color:#999;font-size:12px}
+            @media print{body{padding:20px}}</style></head>
+            <body><div class="header"><div class="logo">ed<span>Q</span>uest</div><p>Know Your Learner Type Report</p><p style="color:#999;font-size:12px">${date}</p></div>
+            <div class="primary"><div class="primary-icon">${cfg.icon}</div><div style="font-size:12px;background:#F5B800;display:inline-block;padding:4px 12px;border-radius:20px;margin-bottom:8px">PRIMARY TYPE</div><div class="primary-name">${cfg.name}</div><p style="color:#666;margin-top:10px">${cfg.desc}</p></div>
+            <div class="section"><div class="section-title">📊 Confidence Scores (/30)</div>${sorted.map(([t,s])=>`<div class="score-bar"><span class="icon">${typeConfig[t].icon}</span><span class="name">${typeConfig[t].name}</span><div class="track"><div class="fill" style="width:${(s/30)*100}%"></div></div><span class="val">${s}</span></div>`).join('')}</div>
+            <div class="section"><div class="section-title">💡 Learning Tips</div><div class="tips"><ul>${cfg.tips.map(t=>`<li>✓ ${t}</li>`).join('')}</ul></div></div>
+            <div class="footer"><div class="logo">ed<span>Q</span>uest</div><p>© ${new Date().getFullYear()} EdQuest</p></div>
+            <script>window.onload=()=>setTimeout(()=>window.print(),500)<\/script></body></html>`;
+
+            const w = window.open('', '_blank');
+            w.document.write(html);
+            w.document.close();
+            showToast('Report opened! Save as PDF from print dialog.', 'success');
+        }, 1000);
+    }
+
+    // ===== SUBSCRIPTION =====
+    let selectedPlan = 'yearly';
+    
+    function showSubscriptionModal() {
+        document.getElementById('subscription-modal').classList.add('show');
+    }
+    
+    function closeSubscriptionModal() {
+        document.getElementById('subscription-modal').classList.remove('show');
+    }
+    
+    function selectPlan(plan) {
+        selectedPlan = plan;
+        const yearly = document.querySelector('[onclick="selectPlan(\'yearly\')"]');
+        const monthly = document.querySelector('[onclick="selectPlan(\'monthly\')"]');
+        if (plan === 'yearly') {
+            yearly.classList.add('border-purple-400', 'bg-purple-50');
+            yearly.classList.remove('border-gray-200');
+            monthly.classList.remove('border-purple-400', 'bg-purple-50');
+            monthly.classList.add('border-gray-200');
+        } else {
+            monthly.classList.add('border-purple-400', 'bg-purple-50');
+            monthly.classList.remove('border-gray-200');
+            yearly.classList.remove('border-purple-400', 'bg-purple-50');
+            yearly.classList.add('border-gray-200');
+        }
+    }
+    
+    function handleSubscription() {
+        closeSubscriptionModal();
+        const price = selectedPlan === 'yearly' ? '₹499/year' : '₹100/month';
+        showToast(`Redirecting to payment for ${price}...`, 'success');
+        setTimeout(() => {
+            showModal('Coming Soon!', `Payment integration for Eddy AI (${price}) will be available soon. Thank you for your interest!`);
+        }, 1500);
+    }
+
+    // Init
+    updateHeaderProgress();
+    </script>
+</body>
+</html>
